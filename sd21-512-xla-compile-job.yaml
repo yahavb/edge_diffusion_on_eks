@@ -1,0 +1,48 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sd2-compile-optimum-neuron
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      nodeSelector:
+        karpenter.sh/nodepool: amd-neuron
+      serviceAccountName: appsimulator
+      schedulerName: my-scheduler
+      volumes:
+      - name: dshm
+        emptyDir:
+          medium: Memory
+      containers:
+      - name: app
+        image: 891377065549.dkr.ecr.us-west-2.amazonaws.com/stablediffusion:amd64-neuron
+        imagePullPolicy: Always
+        volumeMounts:
+          - mountPath: /dev/shm
+            name: dshm
+        command: ["/compile-model.sh"]
+        resources:
+          limits:
+            aws.amazon.com/neuron: 2
+        env:
+        - name: BATCH_SIZE
+          value: "1"
+        - name: HEIGHT
+          value: "512"
+        - name: WIDTH
+          value: "512"
+        - name: DEVICE
+          value: "xla"
+        - name: BUCKET
+          value: "sdinfer1"
+        - name: MODEL_ID
+          value: "stabilityai/stable-diffusion-2-1"
+        - name: COMPILER_WORKDIR_ROOT
+          value: "sd2_compile_dir_512/"
+        - name: MODEL_FILE
+          value: "stable-diffusion-2-1"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name

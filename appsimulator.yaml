@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: appsimulator
+  name: appsimulator
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: appsimulator
+  template:
+    metadata:
+      labels:
+        app: appsimulator
+    spec:
+      nodeSelector:
+        alpha.eksctl.io/nodegroup-name: tlvsummit-demo-ng
+      serviceAccountName: appsimulator
+      containers:
+      - env:
+        - name: MIN_SLEEP_BETWEEN_CYCLE
+          value: "40"
+        - name: MAX_SLEEP_BETWEEN_CYCLE
+          value: "40"
+        - name: QUEUE_URL
+          value: "https://sqs.us-west-2.amazonaws.com/891377065549/loader"
+        - name: DEPLOY_NAME
+          value: "appsimulator"
+        - name: RADIAN_INTERVAL
+          value: "0.314"
+        - name: RADIAN_MAX
+          value: "3.14"
+        - name: MIN_AT_CYCLE_START
+          value: "3"
+        - name: CLIENT_DEPLOY_PREFIX
+          value: "load"
+        - name: CLIENT_DEPLOY_NS
+          value: "load"
+        - name: CLIENT_SCALE_RATIO
+          value: "1"
+        image: 891377065549.dkr.ecr.us-west-2.amazonaws.com/stablediffusion:amd64-neuron-assets
+        imagePullPolicy: Always
+        name: appsimulator
+        command: ["/appsimulator.sh"]

@@ -1,0 +1,92 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: sd21-g5-serve
+  name: sd21-g5-serve
+spec:
+  selector:
+    matchLabels:
+      app: sd21-g5-serve
+  template:
+    metadata:
+      labels:
+        app: sd21-g5-serve
+    spec:
+      nodeSelector:
+        karpenter.sh/nodepool: amd-nvidia
+      serviceAccountName: appsimulator
+      volumes:
+      - name: dshm
+        emptyDir:
+          medium: Memory
+      #initContainers:
+      #- name: pull-model-tar
+      #  image: 891377065549.dkr.ecr.us-west-2.amazonaws.com/stablediffusion:amd64-cuda-assets
+      #  imagePullPolicy: Always
+      #  volumeMounts:
+      #  - name: workdir
+      #    mountPath: /model
+      #  command:
+      #  - /bin/bash
+      #  - "-exc"
+      #  - |
+      #    set -x
+      #    aws s3 cp s3://sdinfer/stable-diffusion-2-1-base_cuda.tar.gz /model/model.tar.gz
+      #    cd /model
+      #    tar -xzf /model/model.tar.gz
+      #    ls /model 
+      containers:
+      - name: app
+        image: 891377065549.dkr.ecr.us-west-2.amazonaws.com/stablediffusion:amd64-cuda
+        imagePullPolicy: Always
+        volumeMounts:
+          - mountPath: /dev/shm
+            name: dshm
+          - mountPath: /app
+            name: workdir
+        command: ["/start.sh"]
+        args: ["run"]
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/create_node_port_svc.sh"]
+          preStop:
+            exec:
+              command: ["/bin/sh","-c","kubectl delete svc `kubectl get svc|grep $POD_NAME | awk '{print $1}'`"]
+        ports:
+          - containerPort: 8000
+            protocol: TCP
+        readinessProbe:
+          httpGet:
+            path: /readiness
+            port: 8000
+          initialDelaySeconds: 60
+          periodSeconds: 10
+        env:
+        - name: NUM_OF_RUNS_INF
+          value: "5"
+        - name: DEVICE
+          value: "cuda"
+        - name: BUCKET
+          value: "sdinfer1"
+        - name: MODEL_ID
+          value: "stabilityai/stable-diffusion-2-1"
+          #value: "stabilityai/stable-diffusion-2-1-base"
+        - name: COMPILER_WORKDIR_ROOT
+          value: "sd2_compile_dir_512"
+        - name: MODEL_FILE
+          value: "stable-diffusion-2-1"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+      volumes:
+      - name: workdir
+        emptyDir: {}
+      - name: dshm
+        emptyDir:
+          medium: Memory

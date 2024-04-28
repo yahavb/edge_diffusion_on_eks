@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: load
+  name: load
+  namespace: load
+spec:
+  selector:
+    matchLabels:
+      app: load
+  template:
+    metadata:
+      labels:
+        app: load
+    spec:
+      nodeSelector:
+        alpha.eksctl.io/nodegroup-name: tlvsummit-demo-ng
+      containers:
+      - name: load
+        image: 891377065549.dkr.ecr.us-west-2.amazonaws.com/stablediffusion:amd64-neuron-assets
+        imagePullPolicy: Always
+        command: ["/call-model.sh"]
+        env:
+        - name: SERVE_ENDPOINT
+          value: "sd21mulitaccelserve-1074923777.us-west-2.elb.amazonaws.com"
+        - name: NUM_OF_ITERATIONS
+          value: "1"
+        - name: SLEEP_TIME
+          value: "10"
+        - name: NUM_OF_INF
+          value: "1"

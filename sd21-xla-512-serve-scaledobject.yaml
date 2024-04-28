@@ -1,0 +1,24 @@
+---
+apiVersion: keda.sh/v1alpha1
+kind: ScaledObject
+metadata:
+  name: sd21-inf2-hpa
+  namespace: default
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: sd21-inf2-serve 
+  minReplicaCount: 5
+  triggers:
+    - type: aws-cloudwatch
+      metadata:
+        namespace: AWS/ApplicationELB
+        metricName: HTTPCode_Target_2XX_Count
+        expression: SELECT SUM(HTTPCode_Target_2XX_Count) FROM SCHEMA("AWS/ApplicationELB", LoadBalancer,TargetGroup) WHERE TargetGroup = 'targetgroup/k8s-default-sd21512x-b625fce11a/a5a6fdf43c25cd9d' AND LoadBalancer = 'app/sd21mulitaccelserve/ebcc2480432c6bad'
+        targetMetricValue: "80"
+        metricUnit: Count
+        minMetricValue: "3"
+        awsRegion: us-west-2
+      authenticationRef:
+        name: keda-trigger-auth-aws-credentials

@@ -1,0 +1,24 @@
+[
+    {
+        "Id": "m1",
+        "MetricStat": {
+            "Metric": {
+                "Namespace": "AWS/ApplicationELB",
+                "MetricName": "TargetResponseTime",
+                "Dimensions": [
+                    {
+                        "Name": "LoadBalancer",
+                        "Value": "app/sd21mulitaccelserve/ebcc2480432c6bad"
+                    },
+                    {   
+                        "Name": "TargetGroup",
+                        "Value": "targetgroup/k8s-default-sd21512x-b625fce11a/a5a6fdf43c25cd9d"
+                    }
+                ]
+            },
+            "Period": 60,
+            "Stat": "Average"
+        },
+        "ReturnData": true
+    }
+]

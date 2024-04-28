@@ -1,0 +1,42 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sd21-g5-compile
+spec:
+  template:
+    spec:
+      restartPolicy: OnFailure
+      nodeSelector:
+        karpenter.sh/nodepool: amd-nvidia
+      serviceAccountName: appsimulator
+      volumes:
+      - name: dshm
+        emptyDir:
+          medium: Memory
+      containers:
+      - name: app
+        image: 891377065549.dkr.ecr.us-west-2.amazonaws.com/stablediffusion:amd64-cuda
+        imagePullPolicy: Always
+        volumeMounts:
+          - mountPath: /dev/shm
+            name: dshm
+        command: ["/start.sh"]
+        args: ["compile"]
+        resources:
+          limits:
+            nvidia.com/gpu: 1
+        env:
+        - name: DEVICE
+          value: "cuda"
+        - name: BUCKET
+          value: "sdinfer1"
+        - name: MODEL_ID
+          value: "stabilityai/stable-diffusion-2-1-base"
+        - name: COMPILER_WORKDIR_ROOT
+          value: "sd2_compile_dir_512"
+        - name: MODEL_FILE
+          value: "stable-diffusion-2-1-base"
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
