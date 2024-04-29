@@ -82,6 +82,7 @@ elif device=='cuda':
   pipe = pipe.to("cuda")
   pipe.enable_attention_slicing
   '''
+  #disbale compile
   pipe.scheduler = EulerAncestralDiscreteScheduler.from_config(pipe.scheduler.config)
   pipe.unet.to(memory_format=torch.channels_last)
   pipe.vae.to(memory_format=torch.channels_last)
