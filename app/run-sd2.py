@@ -89,6 +89,7 @@ elif device=='cuda':
     fullgraph=True, 
     mode="max-autotune-no-cudagraphs"
   )
+  '''
   pipe.text_encoder = torch.compile(
     pipe.text_encoder,
     fullgraph=True,
@@ -104,7 +105,7 @@ elif device=='cuda':
     fullgraph=True,
     mode="max-autotune-no-cudagraphs",
   )
-
+  '''
 def text2img(prompt):
   start_time = time.time()
   image = pipe(prompt).images[0]
